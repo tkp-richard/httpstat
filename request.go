@@ -253,10 +253,14 @@ func RequestWithClient(client *http.Client, method, uri string, header http.Head
 	defer res.Body.Close()
 
 	out.status = res.StatusCode
+	contents, _ := ioutil.ReadAll(res.Body)
+	res.Body = ioutil.NopCloser(bytes.NewReader(contents))
 
 	if _, err := io.Copy(&out.bodySize, res.Body); err != nil {
 		return nil, err
 	}
+
+	res.Body = ioutil.NopCloser(bytes.NewReader(contents))
 
 	var resHeader bytes.Buffer
 	res.Header.Write(&resHeader)
