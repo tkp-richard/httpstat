@@ -1,4 +1,4 @@
-module github.com/apex/httpstat
+module github.com/tkpd-richard-putra/httpstat
 
 go 1.14
 
