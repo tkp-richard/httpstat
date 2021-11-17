@@ -3,6 +3,7 @@ package httpstat
 import (
 	"bytes"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"time"
@@ -81,6 +82,7 @@ type Stats struct {
 	TLS                    bool          `json:"tls"`
 	Header                 http.Header   `json:"header,omitempty"`
 	HeaderSize             int           `json:"header_size,omitempty"`
+	Body                   []byte        `json"body"`
 	BodySize               int           `json:"body_size,omitempty"`
 	TimeDNS                time.Duration `json:"time_dns"`
 	TimeConnect            time.Duration `json:"time_connect"`
@@ -101,6 +103,7 @@ type response struct {
 	headerSize int
 	header     http.Header
 	bodySize   sizeWriter
+	body       io.ReadCloser
 }
 
 // Stats returns a struct of stats.
@@ -112,6 +115,7 @@ func (r response) Stats() *Stats {
 	for _, t := range r.Traces() {
 		traces = append(traces, t.Stats())
 	}
+	body, _ := ioutil.ReadAll(r.body)
 
 	return &Stats{
 		Status:                 r.Status(),
@@ -119,6 +123,7 @@ func (r response) Stats() *Stats {
 		TLS:                    r.TLS(),
 		Header:                 r.Header(),
 		HeaderSize:             r.HeaderSize(),
+		Body:                   body,
 		BodySize:               r.BodySize(),
 		TimeDNS:                r.TimeDNS(),
 		TimeConnect:            r.TimeConnect(),
@@ -257,6 +262,7 @@ func RequestWithClient(client *http.Client, method, uri string, header http.Head
 	res.Header.Write(&resHeader)
 	out.header = res.Header
 	out.headerSize = resHeader.Len()
+	out.body = res.Body
 
 	return &out, nil
 }
