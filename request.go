@@ -94,6 +94,7 @@ type Stats struct {
 	TimeTotalWithRedirects time.Duration `json:"time_total_with_redirects,omitempty"`
 	TimeRedirects          time.Duration `json:"time_redirects,omitempty"`
 	Traces                 []*Stats      `json:"traces,omitempty"`
+	RequestSize            int           `json:"request_size"`
 }
 
 // Response struct.
@@ -104,6 +105,7 @@ type response struct {
 	header     http.Header
 	bodySize   sizeWriter
 	body       io.ReadCloser
+	request    http.Request
 }
 
 // Stats returns a struct of stats.
@@ -135,6 +137,7 @@ func (r response) Stats() *Stats {
 		TimeTotalWithRedirects: r.TimeTotalWithRedirects(now),
 		TimeRedirects:          r.TimeRedirects(),
 		Traces:                 traces,
+		RequestSize:            int(r.request.ContentLength),
 	}
 }
 
@@ -267,6 +270,7 @@ func RequestWithClient(client *http.Client, method, uri string, header http.Head
 	out.header = res.Header
 	out.headerSize = resHeader.Len()
 	out.body = res.Body
+	out.request = *req
 
 	return &out, nil
 }
