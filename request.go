@@ -82,11 +82,12 @@ type Stats struct {
 	TLS                    bool          `json:"tls"`
 	Header                 http.Header   `json:"header,omitempty"`
 	HeaderSize             int           `json:"header_size,omitempty"`
-	Body                   []byte        `json"body"`
+	Body                   []byte        `json:"body"`
 	BodySize               int           `json:"body_size,omitempty"`
 	TimeDNS                time.Duration `json:"time_dns"`
 	TimeConnect            time.Duration `json:"time_connect"`
 	TimeTLS                time.Duration `json:"time_tls"`
+	TimePreWait            time.Duration `json:"time_prewait"`
 	TimeWait               time.Duration `json:"time_wait"`
 	TimeResponse           time.Duration `json:"time_response"`
 	TimeDownload           time.Duration `json:"time_download"`
@@ -119,6 +120,7 @@ func (r response) Stats() *Stats {
 	}
 	body, _ := ioutil.ReadAll(r.body)
 
+	println(r.request.ContentLength)
 	return &Stats{
 		Status:                 r.Status(),
 		Redirects:              r.Redirects(),
@@ -130,6 +132,7 @@ func (r response) Stats() *Stats {
 		TimeDNS:                r.TimeDNS(),
 		TimeConnect:            r.TimeConnect(),
 		TimeTLS:                r.TimeTLS(),
+		TimePreWait:            r.TimePreWait(),
 		TimeWait:               r.TimeWait(),
 		TimeResponse:           r.TimeResponse(now),
 		TimeDownload:           r.TimeDownload(now),
@@ -194,6 +197,11 @@ func (r *response) TimeConnect() time.Duration {
 // TimeTLS implementation.
 func (r *response) TimeTLS() time.Duration {
 	return r.last().TimeTLS()
+}
+
+// TimePreWait implementation.
+func (r *response) TimePreWait() time.Duration {
+	return r.last().TimePreWait()
 }
 
 // TimeWait implementation.

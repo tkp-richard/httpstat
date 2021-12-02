@@ -23,6 +23,7 @@ type Trace interface {
 	TimeConnect() time.Duration
 	TimeTLS() time.Duration
 	TimeWait() time.Duration
+	TimePreWait() time.Duration
 	TimeResponse(time.Time) time.Duration
 	TimeDownload(time.Time) time.Duration
 	TimeTotal(time.Time) time.Duration
@@ -72,6 +73,11 @@ func (t *trace) TimeConnect() time.Duration {
 // TimeTLS implementation.
 func (t *trace) TimeTLS() time.Duration {
 	return t.tlsEnd.Sub(t.tlsStart)
+}
+
+// TimePreWait implementation.
+func (t *trace) TimePreWait() time.Duration {
+	return t.waitStart.Sub(t.tlsEnd)
 }
 
 // TimeWait implementation.
