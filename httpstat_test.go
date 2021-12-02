@@ -9,7 +9,7 @@ import (
 
 	"github.com/tj/assert"
 
-	"github.com/apex/httpstat"
+	"github.com/tkpd-richard-putra/httpstat"
 )
 
 func server(h http.HandlerFunc) *httptest.Server {

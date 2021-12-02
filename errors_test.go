@@ -8,7 +8,7 @@ import (
 
 	"github.com/tj/assert"
 
-	"github.com/apex/httpstat"
+	"github.com/tkpd-richard-putra/httpstat"
 )
 
 func TestResponse_errors(t *testing.T) {
