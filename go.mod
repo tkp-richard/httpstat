@@ -1,4 +1,4 @@
-module github.com/tkpd-richard-putra/httpstat
+module github.com/tkp-richard/httpstat
 
 go 1.14
 
