@@ -3,7 +3,6 @@ package httpstat
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 	"net/http/httptrace"
 	"time"
 )
@@ -168,9 +167,4 @@ func (t trace) Stats() *Stats {
 		TimeDownload: t.TimeDownload(now),
 		TimeTotal:    t.TimeTotal(now),
 	}
-}
-
-// Millisecond formatter.
-func ms(d time.Duration) string {
-	return fmt.Sprintf("%.0fms", float64(d)/float64(time.Millisecond))
 }

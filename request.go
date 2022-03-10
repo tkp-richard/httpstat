@@ -73,6 +73,8 @@ type Response interface {
 	TimeRedirects() time.Duration
 	Traces() []Trace
 	Stats() *Stats
+	Request() *http.Request
+	Response() *http.Response
 }
 
 // Stats is an opaque struct which can be useful for JSON marshaling.
@@ -82,7 +84,6 @@ type Stats struct {
 	TLS                    bool          `json:"tls"`
 	Header                 http.Header   `json:"header,omitempty"`
 	HeaderSize             int           `json:"header_size,omitempty"`
-	Body                   []byte        `json:"body"`
 	BodySize               int           `json:"body_size,omitempty"`
 	TimeDNS                time.Duration `json:"time_dns"`
 	TimeConnect            time.Duration `json:"time_connect"`
@@ -105,8 +106,8 @@ type response struct {
 	headerSize int
 	header     http.Header
 	bodySize   sizeWriter
-	body       io.ReadCloser
-	request    http.Request
+	request    *http.Request
+	response   *http.Response
 }
 
 // Stats returns a struct of stats.
@@ -118,16 +119,13 @@ func (r response) Stats() *Stats {
 	for _, t := range r.Traces() {
 		traces = append(traces, t.Stats())
 	}
-	body, _ := ioutil.ReadAll(r.body)
 
-	println(r.request.ContentLength)
 	return &Stats{
 		Status:                 r.Status(),
 		Redirects:              r.Redirects(),
 		TLS:                    r.TLS(),
 		Header:                 r.Header(),
 		HeaderSize:             r.HeaderSize(),
-		Body:                   body,
 		BodySize:               r.BodySize(),
 		TimeDNS:                r.TimeDNS(),
 		TimeConnect:            r.TimeConnect(),
@@ -142,6 +140,16 @@ func (r response) Stats() *Stats {
 		Traces:                 traces,
 		RequestSize:            int(r.request.ContentLength),
 	}
+}
+
+// Request *http.Request.
+func (r *response) Request() *http.Request {
+	return r.request
+}
+
+// Response *http.Response.
+func (r *response) Response() *http.Response {
+	return r.response
 }
 
 // Status code.
@@ -254,11 +262,17 @@ func RequestWithClient(client *http.Client, method, uri string, header http.Head
 		}
 	}
 
+	return Do(client, req)
+}
+
+// Do performs a traced request with http.Request.
+func Do(client *http.Client, req *http.Request) (Response, error) {
 	var out response
 	req = req.WithContext(WithTraces(req.Context(), &out.traces))
 
 	res, err := client.Do(req)
 	if err != nil {
+		println(err.Error())
 		return nil, normalizeError(err)
 	}
 	defer res.Body.Close()
@@ -266,19 +280,19 @@ func RequestWithClient(client *http.Client, method, uri string, header http.Head
 	out.status = res.StatusCode
 	contents, _ := ioutil.ReadAll(res.Body)
 	res.Body = ioutil.NopCloser(bytes.NewReader(contents))
-
 	if _, err := io.Copy(&out.bodySize, res.Body); err != nil {
 		return nil, err
 	}
 
+	// copy into body
 	res.Body = ioutil.NopCloser(bytes.NewReader(contents))
 
 	var resHeader bytes.Buffer
 	res.Header.Write(&resHeader)
 	out.header = res.Header
 	out.headerSize = resHeader.Len()
-	out.body = res.Body
-	out.request = *req
+	out.request = req
+	out.response = res
 
 	return &out, nil
 }
