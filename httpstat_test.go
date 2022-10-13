@@ -301,30 +301,35 @@ func TestResponse_TLS(t *testing.T) {
 }
 
 func TestResponse_ResponseSize(t *testing.T) {
-	t.Run("filesize none", func(t *testing.T) {
-		s := server(noRedirects)
-		defer s.Close()
+	defaultTimeout := httpstat.DefaultClient.Timeout.Seconds()
 
+	t.Run("filesize none", func(t *testing.T) {
 		res, err := httpstat.Request("GET", "https://google.com", nil, nil)
-		assert.NoError(t, err, "")
+		assert.NoError(t, err, "request")
 		assert.Less(t, res.BodySize(), httpstat.ResponseSizeLimit)
 	})
 
-	t.Run("filesize 970kb", func(t *testing.T) {
-		s := server(noRedirects)
-		defer s.Close()
-
+	t.Run("filesize 970KB", func(t *testing.T) {
 		res, err := httpstat.Request("GET", "https://images.pexels.com/photos/2559941/pexels-photo-2559941.jpeg?w=2850&h=3000", nil, nil)
-		assert.NoError(t, err, "")
+		assert.NoError(t, err, "request")
 		assert.Less(t, res.BodySize(), httpstat.ResponseSizeLimit)
+	})
+
+	t.Run("filesize 100MB", func(t *testing.T) {
+		res, err := httpstat.Request("GET", "https://speedtest-ny.turnkeyinternet.net/1000mb.bin", nil, nil)
+		elapsed := res.Stats().TimeTotal.Seconds()
+
+		assert.NoError(t, err, "request")
+		assert.Less(t, elapsed, defaultTimeout)
+		assert.Equal(t, httpstat.ResponseSizeLimit, res.BodySize())
 	})
 
 	t.Run("filesize 10GB", func(t *testing.T) {
-		s := server(noRedirects)
-		defer s.Close()
-
 		res, err := httpstat.Request("GET", "https://speed.hetzner.de/10GB.bin", nil, nil)
-		assert.NoError(t, err, "")
-		assert.Equal(t, res.BodySize(), httpstat.ResponseSizeLimit)
+		elapsed := res.Stats().TimeTotal.Seconds()
+
+		assert.NoError(t, err, "request")
+		assert.Less(t, elapsed, defaultTimeout)
+		assert.Equal(t, httpstat.ResponseSizeLimit, res.BodySize())
 	})
 }

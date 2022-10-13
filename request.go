@@ -11,8 +11,8 @@ import (
 
 // TODO: distinct timeout errors for TLS etc
 
-// ResponseSizeLimit limit for response size 1MB + 10KB
-const ResponseSizeLimit = 1010000
+// ResponseSizeLimit limit for response size 1MB
+const ResponseSizeLimit = 1024 * 1024
 
 // DefaultMaxRedirects is the max number of redirects.
 var DefaultMaxRedirects = 5
