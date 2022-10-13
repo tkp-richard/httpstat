@@ -11,6 +11,9 @@ import (
 
 // TODO: distinct timeout errors for TLS etc
 
+// ResponseSizeLimit limit for response size 1MB + 10KB
+const ResponseSizeLimit = 1010000
+
 // DefaultMaxRedirects is the max number of redirects.
 var DefaultMaxRedirects = 5
 
@@ -278,7 +281,7 @@ func Do(client *http.Client, req *http.Request) (Response, error) {
 	defer res.Body.Close()
 
 	out.status = res.StatusCode
-	contents, _ := ioutil.ReadAll(res.Body)
+	contents, _ := ReadLimited(res.Body)
 	res.Body = ioutil.NopCloser(bytes.NewReader(contents))
 	if _, err := io.Copy(&out.bodySize, res.Body); err != nil {
 		return nil, err
@@ -300,4 +303,9 @@ func Do(client *http.Client, req *http.Request) (Response, error) {
 // Request performs a traced request.
 func Request(method, uri string, header http.Header, body io.Reader) (Response, error) {
 	return RequestWithClient(DefaultClient, method, uri, header, body)
+}
+
+func ReadLimited(rc io.ReadCloser) ([]byte, error) {
+	r := io.LimitReader(rc, int64(ResponseSizeLimit))
+	return ioutil.ReadAll(r)
 }
